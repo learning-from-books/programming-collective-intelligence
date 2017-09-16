@@ -105,9 +105,38 @@ def topMatches(prefs, person, n=5, similarity=sim_pearson):
     return scores[0:n]
 
 
+def getRecommendations(prefs, person, similarity=sim_pearson):
+    totals = {}
+    simSums = {}
+
+    for other in prefs:
+        if other == person:
+            continue
+        sim = similarity(prefs, person, other)
+        if sim <= 0:
+            continue
+
+        for item in prefs[other]:
+            if item not in prefs[person] or prefs[person][item] == 0:
+                totals.setdefault(item, 0)
+                totals[item] += prefs[other][item] * sim
+
+                simSums.setdefault(item, 0)
+                simSums[item] += sim
+
+    ranking = [(total / simSums[item], item)
+               for item, total in totals.items()]
+
+    ranking.sort()
+    ranking.reverse()
+    return ranking
+
+
 if __name__ == '__main__':
     print(sim_distance(critics, 'Lisa Rose', 'Gene Seymour'))
 
     print(sim_pearson(critics, 'Lisa Rose', 'Gene Seymour'))
 
     print(topMatches(critics, 'Toby', n=3))
+
+    print(getRecommendations(critics, 'Toby'))
