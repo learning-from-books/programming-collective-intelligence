@@ -142,6 +142,54 @@ def transformPrefs(prefs):
     return results
 
 
+def calculateSimilarItems(prefs, n=10):
+    results = {}
+    itemPrefs = transformPrefs(prefs)
+    c = 0
+    for item in itemPrefs:
+        c += 1
+        if c % 100 == 0:
+            print("{}/{}".format(c, len(itemPrefs)))
+        scores = topMatches(itemPrefs, item, n=n, similarity=sim_distance)
+        results[item] = scores
+
+    return results
+
+
+def getRecommendedItems(prefs, itemMatch, user):
+    userRatings = prefs = prefs[user]
+    scores = {}
+    totalSim = {}
+    for (item, rating) in userRatings.items():
+        for (similarity, item2) in itemMatch(item):
+            if item2 in userRatings:
+                continue
+            scores.setdefault(item2, 0)
+            scores[item2] += similarity * rating
+            totalSim.setdefault(item2, 0)
+            totalSim[item2] += similarity
+    rankings = [(score / totalSim[item], item)
+                for (item, score) in scores.items()]
+    rankings.sort()
+    rankings.reverse()
+    return rankings
+
+
+# we can get the data from the site  of
+# https://grouplens.org/datasets/
+def loadMovieLens(path='/data/movielens'):
+    movies = {}
+    for line in open(path + '/u.item'):
+        (id, title) = line.split('|')[0:2]
+        movies[id] = title
+    prefs = {}
+    for line in open(path + '/u.data'):
+        (user, movieid, rating, ts) = line.split('\t')
+        prefs.setdefault(user, {})
+        prefs[user][movies[movieid]] = float(rating)
+    return prefs
+
+
 if __name__ == '__main__':
     print(sim_distance(critics, 'Lisa Rose', 'Gene Seymour'))
 
@@ -155,3 +203,5 @@ if __name__ == '__main__':
     print(topMatches(movies, 'Superman Returns'))
 
     print(getRecommendations(movies, 'Just My Luck'))
+
+    print(calculateSimilarItems(critics))
