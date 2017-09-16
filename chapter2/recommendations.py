@@ -97,7 +97,17 @@ def sim_pearson(prefs, p1, p2):
     return num1 / num2
 
 
+def topMatches(prefs, person, n=5, similarity=sim_pearson):
+    scores = [(similarity(prefs, person, other), other)
+              for other in prefs if other != person]
+    scores.sort()
+    scores.reverse()
+    return scores[0:n]
+
+
 if __name__ == '__main__':
     print(sim_distance(critics, 'Lisa Rose', 'Gene Seymour'))
 
     print(sim_pearson(critics, 'Lisa Rose', 'Gene Seymour'))
+
+    print(topMatches(critics, 'Toby', n=3))
